@@ -33,6 +33,18 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#define LED0_GPIO_PORT_NUM                      0
+#define LED0_GPIO_BIT_NUM                       22 /* Red LED */
+#define LED1_GPIO_PORT_NUM                      3
+#define LED1_GPIO_BIT_NUM                       26 /* Blue LED */
+#define LED2_GPIO_PORT_NUM                      3
+#define LED2_GPIO_BIT_NUM                       25 /* Green LED */
+
+
+void Delay()
+{
+	for(long int i=0;i<=9999999;i++);
+}
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
@@ -55,50 +67,37 @@ static void prvSetupHardware(void)
 	Board_LED_Set(0, false);
 
 	/* Initial LED1 state is off */
-	Board_LED_Set(1, false);
+		Board_LED_Set(1, false);
 
-	/* Initial LED2 state is off */
-	Board_LED_Set(2, false);
+		/* Initial LED2 state is off */
+			Board_LED_Set(2, false);
 }
 
 /* LED1 toggle thread */
 static void vLEDTask1(void *pvParameters) {
-	bool LedState = false;
+while(1)
+{
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED0_GPIO_PORT_NUM, LED0_GPIO_BIT_NUM, true);
+	Delay();
 
-	while (1) {
-		Board_LED_Set(0, LedState);
-		LedState = (bool) !LedState;
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED0_GPIO_PORT_NUM, LED0_GPIO_BIT_NUM, false);
+	Delay();
 
-		/* About a 3Hz on/off toggle rate */
-		vTaskDelay(configTICK_RATE_HZ / 12);
-	}
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED1_GPIO_PORT_NUM, LED1_GPIO_BIT_NUM, true);
+	Delay();
+
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED1_GPIO_PORT_NUM, LED1_GPIO_BIT_NUM, false);
+	Delay();
+
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED2_GPIO_PORT_NUM, LED2_GPIO_BIT_NUM, true);
+	Delay();
+
+	Chip_GPIO_WriteDirBit(LPC_GPIO, LED2_GPIO_PORT_NUM, LED2_GPIO_BIT_NUM, false);
+	Delay();
+}
 }
 
-/* LED2 toggle thread */
-static void vLEDTask2(void *pvParameters) {
-	bool LedState = false;
 
-	while (1) {
-		Board_LED_Set(1, LedState);
-		LedState = (bool) !LedState;
-
-		/* About a 7Hz on/off toggle rate */
-		vTaskDelay(configTICK_RATE_HZ / 10);
-	}
-}
-
-/* LED2 toggle thread */
-static void vLEDTask3(void *pvParameters) {
-	bool LedState = false;
-
-	while (1) {
-		Board_LED_Set(2, LedState);
-		LedState = (bool) !LedState;
-
-		/* About a 7Hz on/off toggle rate */
-		vTaskDelay(configTICK_RATE_HZ / 5);
-	}
-}
 /* UART (or output) thread */
 static void vUARTTask(void *pvParameters) {
 	int tickCnt = 0;
@@ -129,15 +128,7 @@ int main(void)
 				configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL),
 				(xTaskHandle *) NULL);
 
-	/* LED2 toggle thread */
-	xTaskCreate(vLEDTask2, (signed char *) "vTaskLed2",
-				configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL),
-				(xTaskHandle *) NULL);
 
-	/* LED2 toggle thread */
-		xTaskCreate(vLEDTask3, (signed char *) "vTaskLed3",
-					configMINIMAL_STACK_SIZE, NULL, (tskIDLE_PRIORITY + 1UL),
-					(xTaskHandle *) NULL);
 
 	/* UART output thread, simply counts seconds */
 	xTaskCreate(vUARTTask, (signed char *) "vTaskUart",
